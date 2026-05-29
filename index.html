@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pageant Score Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Montserrat:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; }
+        body { touch-action: manipulation; }
+        ::-webkit-scrollbar { display: none; }
+        .scrolling-touch { -webkit-overflow-scrolling: touch; }
+
+        /* =========================================
+           CSS VARIABLES — DEFAULT THEME
+        ========================================= */
+        :root {
+            --bg-deep: #080c14;
+            --bg-card: #0f1623;
+            --bg-card2: #131c2e;
+            --border: #1e2d47;
+            --gold: #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dim: #7a6128;
+            --gold-grad: linear-gradient(135deg, #7a5c1e 0%, #c9a84c 40%, #f0d080 60%, #c9a84c 80%, #7a5c1e 100%);
+            --text-primary: #e8e8f0;
+            --text-muted: #6b7a99;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+        }
+
+        /* =========================================
+           MGI ALL STARS THEME
+        ========================================= */
+        body.theme-mgi {
+            --bg-deep: #04070a;
+            --bg-card: #080f14;
+            --bg-card2: #0c1520;
+            --border: #1a3040;
+            --gold: #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dim: #5a4010;
+            --gold-grad: linear-gradient(135deg, #6b4c18 0%, #c9a84c 35%, #f5e090 55%, #c9a84c 75%, #6b4c18 100%);
+            --text-primary: #dde8f0;
+            --text-muted: #4a6880;
+            --accent: #00c8e8;
+            --accent2: #00a8c8;
+            --mgi-teal: #0a8090;
+            --mgi-teal-bright: #00d0f0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body.theme-mgi::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(0,150,200,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(180,130,40,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 10%, rgba(0,200,240,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body.theme-mgi > div:not(.fixed) { position: relative; z-index: 1; }
+
+        .font-cinzel { font-family: 'Cinzel', serif !important; }
+        .font-cinzel-deco { font-family: 'Cinzel Decorative', serif !important; }
+
+        .text-gold { color: var(--gold); }
+        .text-gold-light { color: var(--gold-light); }
+        .gradient-gold {
+            background: var(--gold-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .card-glow {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 0 0 1px rgba(201,168,76,0.05), 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .card-gold-border {
+            background: var(--bg-card);
+            border: 1px solid rgba(201,168,76,0.4);
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(201,168,76,0.08);
+        }
+
+        .btn-gold {
+            background: rgba(25, 15, 5, 0.6);
+            border: 1px solid rgba(220, 180, 80, 0.4);
+            border-radius: 8px;
+            padding: 12px 20px;
+            
+            /* Acá aplicamos la tipografía Afacad y la agrandamos */
+            font-family: 'Afacad', sans-serif;
+            font-size: 15px; 
+            font-weight: 600;
+            letter-spacing: 0.1em; 
+            text-transform: uppercase;
+            
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px); 
+            box-shadow: inset 0 0 15px rgba(201, 168, 76, 0.05);
+            color: #ffe6a0; 
+            text-shadow: 0 0 6px rgba(201, 168, 76, 0.8), 0 0 1px rgba(255, 255, 255, 0.4);
+        }
+        .btn-gold:hover {
+            background: rgba(40, 25, 5, 0.8);
+            border-color: rgba(220, 180, 80, 0.8);
+            text-shadow: 0 0 10px rgba(201, 168, 76, 1), 0 0 2px rgba(255, 255, 255, 0.6);
+            box-shadow: inset 0 0 20px rgba(201, 168, 76, 0.15), 0 0 15px rgba(201, 168, 76, 0.1);
+        }
+        .btn-gold:active { 
+            transform: scale(0.97); 
+        }
+
+        .btn-ghost {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+        .input-field {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus { border-color: var(--gold); }
+        
+        /* Forzamos el fondo oscuro en la lista desplegable */
+        .input-field option {
+            background-color: #0f1623;
+            color: #e8e8f0;
+        }
+        body.theme-mgi .input-field option {
+            background-color: #080f14;
+        }
+
+        .score-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 48px;
+            height: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .score-box.active {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.12);
+            box-shadow: 0 0 12px rgba(201,168,76,0.2);
+        }
+
+        .mgi-hero-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            background: linear-gradient(145deg, #040e16 0%, #061420 50%, #040a12 100%);
+            border: 1px solid rgba(0,180,220,0.2);
+            box-shadow: 0 0 60px rgba(0,120,180,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .mgi-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 70% 40%, rgba(0,150,200,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 30% 80%, rgba(180,130,40,0.08) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .mgi-hero-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(0,180,220,0.06) 0%, transparent 50%, rgba(201,168,76,0.04) 100%);
+        }
+        .mgi-hero-card:active { transform: scale(0.98); }
+
+        .orbit-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0,180,220,0.15);
+        }
+
+        .pct-bar-bg {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden;
+        }
+        .pct-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--gold-grad);
+            transition: width 0.6s ease;
+        }
+        body.theme-mgi .pct-bar-fill.top {
+            background: linear-gradient(90deg, #006890, #00c8e8);
+        }
+
+        .candidata-row {
+            transition: opacity 0.15s, transform 0.15s;
+            touch-action: none;
+        }
+        .candidata-row.dragging { opacity: 0.4; transform: scale(0.97); }
+        .candidata-row.drag-over { transform: translateY(-3px); box-shadow: 0 -3px 0 var(--gold); }
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            padding: 4px 8px 4px 4px;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        .tab-pill {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-pill.active { background: var(--gold-grad); color: #1a0e00; border-color: transparent; }
+        body.theme-mgi .tab-pill.active {
+            background: linear-gradient(135deg, #004a60, #0090b8);
+            color: #a0eeff;
+            border-color: rgba(0,180,220,0.4);
+        }
+
+        @keyframes pulse-red { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+        .pulse-dot { animation: pulse-red 1.5s ease-in-out infinite; }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(300%) rotate(45deg); }
+        }
+        .shimmer-line {
+            position: absolute; width: 30%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent);
+            animation: shimmer 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .section-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--text-muted); padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+        }
+
+        @keyframes twinkle { 0%,100% {opacity:0.3; transform:scale(1);} 50% {opacity:1; transform:scale(1.3);} }
+        .sparkle { animation: twinkle 2s ease-in-out infinite; }
+        .sparkle:nth-child(2) { animation-delay: 0.7s; }
+        .sparkle:nth-child(3) { animation-delay: 1.4s; }
+
+        /* Animación para los aciertos en el corte en vivo */
+        @keyframes popIn { 
+            0% { transform: scale(0.5); opacity: 0; } 
+            70% { transform: scale(1.1); } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
+        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        .pos-badge {
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-family: 'Cinzel', serif; font-weight: 900; font-size: 13px; flex-shrink: 0;
+        }
+        .pos-badge.gold { background: var(--gold-grad); color: #1a0e00; box-shadow: 0 0 12px rgba(201,168,76,0.4); }
+        .pos-badge.inside { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+        .pos-badge.outside { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
+
+        #autocomplete-lista {
+            position: absolute; z-index: 100; left: 0; right: 0; top: 100%;
+            background: #111826; border: 1px solid var(--border); border-radius: 12px;
+            overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.6); max-height: 200px; overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="pb-[380px]" id="body-app">
+
+    <div id="vista-home" class="hidden w-full max-w-md md:max-w-3xl mx-auto p-4 pt-8 space-y-6">
+        <div class="text-center pt-2 pb-4">
+            <p class="text-[9px] font-cinzel tracking-[0.3em] text-gold uppercase mb-1">Welcome to</p>
+            <h1 class="font-cinzel-deco text-4xl font-black gradient-gold leading-tight">PAGEANT</h1>
+            <h2 class="font-cinzel text-xl tracking-[0.2em] text-gold-light opacity-80">TRACKER</h2>
+            <div class="flex justify-center gap-3 mt-2">
+                <span class="sparkle text-gold opacity-50">✦</span>
+                <span class="sparkle text-gold opacity-70">★</span>
+                <span class="sparkle text-gold opacity-50">✦</span>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-label">⚡ Iniciar desde Plantilla</div>
+            <div id="lista-plantillas-home" class="grid grid-cols-2 gap-3"></div>
+            <button onclick="mostrarVista('vista-config-nuevo')" class="btn-ghost w-full mt-3 py-3">+ Crear desde Cero</button>
+        </div>
+
+        <div>
+            <div class="section-label">📂 Mis Certámenes en Curso</div>
+            <div id="lista-eventos-home" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <div id="vista-config" class="hidden w-full max-w-md md:max-w-3xl mx-auto p-4 pt-6 space-y-5">
+        <button onclick="mostrarVista('vista-home')" class="flex items-center gap-2 text-gold text-sm font-semibold mb-2">← Inicio</button>
+        <div class="card-glow p-5 space-y-4">
+            <h2 class="font-cinzel text-lg font-bold text-gold" id="config-titulo-header">Constructor de Certamen</h2>
+            <div id="config-evento-container">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-gold mb-1 block">Nombre del Evento</label>
+                <input type="text" id="config-nombre-evento" placeholder="Ej: Miss Universe 2026" class="input-field mb-3">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-gold mb-1 block">Estética Visual</label>
+                <select id="config-tema" class="input-field">
+                    <option value="default">Clásico (Azul y Dorado)</option>
+                    <option value="mgi">MGI All Stars (Futurista)</option>
+                </select>
+            </div>
+            <div id="contenedor-rondas-config" class="space-y-4 mt-2"></div>
+            <button onclick="agregarRondaNuevaConfig()" class="w-full btn-ghost py-2 text-xs border-dashed mt-2">+ Agregar otra etapa</button>
+            <button onclick="guardarConfiguracion()" class="btn-gold w-full py-3 mt-4">Guardar e Iniciar</button>
+            <button id="btn-guardar-plantilla" onclick="guardarEventoComoPlantilla()" class="w-full py-3 mt-2 rounded-xl text-xs font-bold border border-purple-800/60 bg-purple-900/20 text-purple-300">💾 Guardar como Plantilla Base</button>
+        </div>
+    </div>
+
+    <div id="vista-scoring" class="hidden w-full max-w-md md:max-w-6xl mx-auto p-3 pt-4 space-y-3">
+       <div class="flex items-center justify-between mb-2 gap-2">
+            <button onclick="mostrarVista('vista-home')" class="text-gold/80 hover:text-gold transition p-1" title="Inicio">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+            </button>
+            <h2 class="font-cinzel text-sm md:text-base font-bold gradient-gold tracking-widest truncate flex-1 text-left" id="header-evento-nombre"></h2>
+            
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button onclick="mostrarVista('vista-ranking')" class="bg-amber-900/30 text-gold px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase border border-amber-800/40 shadow-md flex items-center justify-center hover:bg-amber-800/40 transition">TOP</button>
+                <button id="btn-scoring-corte" onclick="iniciarCorteEnVivo()" class="bg-red-900/40 text-red-400 border border-red-800/50 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold shadow-md hidden flex items-center gap-1">🔴 CORTE</button>
+                <button id="btn-scoring-coronacion" onclick="iniciarCoronacion()" class="hidden px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold shadow-md flex items-center gap-1" style="background:linear-gradient(135deg,#4a006e,#8b22d0);color:#e0b0ff;border:1px solid rgba(180,100,255,0.4);">👑 CORONAR</button>
+                <button onclick="mostrarVista('vista-config-editar')" class="text-gold/60 hover:text-gold transition p-1" title="Configuración">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="timeline-rondas" class="flex gap-2 overflow-x-auto pb-1 scrolling-touch"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            <div class="space-y-3 md:col-span-1 md:sticky md:top-2">
+                <div class="flex flex-col gap-2 bg-white/5 p-3 rounded-2xl border border-white/10">
+                    <label class="text-[10px] text-gold/70 font-bold uppercase tracking-wider">Orden visual</label>
+                    <select id="select-ordenamiento" onchange="cambiarOrdenCandidatas(this.value)" class="input-field text-xs py-2 w-full" style="font-size:11px;">
+                        <option value="carga">Orden de Carga</option>
+                        <option value="llamado">Llamado al Top</option>
+                        <option value="manual">Orden Manual</option>
+                        <option value="alfabetico">Alfabético A-Z</option>
+                        <option value="promedio">Por Promedio</option>
+                    </select>
+                    <button onclick="abrirMenuModoRapido()" class="btn-gold w-full mt-1 py-3 rounded-xl text-xs font-black tracking-widest flex items-center justify-center gap-2 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                        PUNTUADOR RÁPIDO
+                    </button>
+                </div>
+
+                <div class="card p-4">
+                    <div class="section-label">+ Agregar Candidata</div>
+                    <div class="relative mb-3">
+                        <input type="text" id="input-nombre" placeholder="País o nombre..." class="input-field" oninput="buscarPais(this.value)" autocomplete="off">
+                        <div id="autocomplete-lista" class="hidden"></div>
+                    </div>
+                    <label class="text-[10px] text-gold/60 uppercase font-bold mb-1 block">Foto (opcional)</label>
+                    <input type="file" id="input-foto" accept="image/*" class="text-xs text-gold/50 mb-3 w-full">
+                    <button onclick="agregarCandidata()" class="btn-gold w-full py-2.5 text-xs">+ Agregar</button>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <div id="lista-candidatas" class="grid gap-3 pb-16" style="grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));"></div>
+            </div>
+        </div>
+
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md z-50 p-3 pb-5 rounded-t-2xl border-t" style="background: var(--bg-deep); border-color: var(--border); box-shadow: 0 -15px 40px rgba(0,0,0,0.85);">
+            
+            <!-- Botones de Categorías movidos arriba del teclado -->
+            <div class="grid grid-cols-3 gap-1.5 mb-2" id="numpad-parametros-1"></div>
+            <div class="grid grid-cols-3 gap-1.5 mb-2" id="numpad-parametros-2"></div>
+
+            <div id="indicador-teclado" class="text-[10px] text-center text-gold/60 font-semibold tracking-wider py-1 mb-1">Seleccioná un casillero para puntuar</div>
+
+            <div class="card p-2.5 shadow-xl">
+                <div class="grid grid-cols-4 gap-1.5 text-center text-lg font-bold font-cinzel">
+                    <button onclick="presionarTecla('1')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">1</button>
+                    <button onclick="presionarTecla('2')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">2</button>
+                    <button onclick="presionarTecla('3')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">3</button>
+                    <button onclick="presionarTecla('BORRAR')" class="bg-red-950/50 text-red-400 py-2.5 rounded-xl text-xs border border-red-900/40 transition">⌫</button>
+                    
+                    <button onclick="presionarTecla('4')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">4</button>
+                    <button onclick="presionarTecla('5')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">5</button>
+                    <button onclick="presionarTecla('6')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">6</button>
+                    <div class="row-span-2"></div>
+                    
+                    <button onclick="presionarTecla('7')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">7</button>
+                    <button onclick="presionarTecla('8')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">8</button>
+                    <button onclick="presionarTecla('9')" class="bg-white/5 hover:bg-white/10 border border-white/10 py-2.5 rounded-xl transition">9</button>
+                    
+                    <button onclick="presionarTecla('.')" class="bg-white/5 border border-white/10 py-2.5 rounded-xl transition">.</button>
+                    <button onclick="presionarTecla('0')" class="bg-white/5 border border-white/10 py-2.5 rounded-xl transition">0</button>
+                    <button onclick="presionarTecla('10')" class="bg-white/5 border border-white/10 py-2.5 rounded-xl text-gold text-sm transition">10</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODO RÁPIDO ===================== -->
+    <div id="vista-modo-rapido" class="hidden fixed inset-0 z-[100] flex flex-col" style="background: var(--bg-deep);">
+        <!-- Header Fijo -->
+        <div class="flex items-center justify-between p-3 sm:p-4 border-b shrink-0" style="border-color:var(--border);">
+            <button onclick="cerrarModoRapido()" class="text-gold/70 font-semibold text-sm">← Volver</button>
+            <p class="font-cinzel text-xs tracking-widest text-gold" id="rapido-parametro-nombre"></p>
+            <div class="flex gap-2">
+                <button onclick="cambiarCandidataRapido(-1)" class="btn-ghost text-xs py-1.5 px-3">← ANT</button>
+            </div>
+        </div>
+
+        <!-- Centro Scrolleable y Proporcionado -->
+        <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 gap-3 sm:gap-4 overflow-y-auto">
+            <!-- Limitamos el tamaño máximo de la imagen para que no explote en PC -->
+            <img id="rapido-candidata-foto" src="" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 shadow-2xl shrink-0" style="border-color:var(--gold);">
+            <div class="text-center shrink-0">
+                <h2 class="font-cinzel text-xl sm:text-2xl font-bold gradient-gold" id="rapido-candidata-nombre"></h2>
+            </div>
+            <!-- Redujimos un poco el padding vertical para que respire en pantallas apaisadas -->
+            <div class="card-gold-border px-8 py-3 sm:px-10 sm:py-4 text-center shrink-0">
+                <p class="text-[10px] text-gold/60 uppercase tracking-widest mb-1">Puntaje</p>
+                <p id="rapido-candidata-nota" class="font-cinzel-deco text-4xl font-black gradient-gold">-</p>
+            </div>
+        </div>
+
+        <!-- Teclado Fijo y visible siempre abajo -->
+        <div class="p-3 sm:p-4 max-w-md mx-auto w-full shrink-0">
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-2 text-center text-lg font-bold font-cinzel pb-2">
+                <button onclick="teclaModoRapido('1')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">1</button>
+                <button onclick="teclaModoRapido('2')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">2</button>
+                <button onclick="teclaModoRapido('3')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">3</button>
+                <button onclick="teclaModoRapido('BORRAR')" class="bg-red-950/50 text-red-400 py-3 sm:py-3.5 rounded-xl text-xs border border-red-900/40 transition hover:bg-red-900/60">⌫</button>
+                
+                <button onclick="teclaModoRapido('4')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">4</button>
+                <button onclick="teclaModoRapido('5')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">5</button>
+                <button onclick="teclaModoRapido('6')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">6</button>
+                <button onclick="cambiarCandidataRapido(1)" class="btn-gold py-3 sm:py-3.5 rounded-xl text-sm row-span-2 flex items-center justify-center shadow-lg">SIG<br>➡</button>
+                
+                <button onclick="teclaModoRapido('7')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">7</button>
+                <button onclick="teclaModoRapido('8')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">8</button>
+                <button onclick="teclaModoRapido('9')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">9</button>
+                
+                <button onclick="teclaModoRapido('.')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl text-sm transition hover:bg-white/10">.</button>
+                <button onclick="teclaModoRapido('0')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl transition hover:bg-white/10">0</button>
+                <button onclick="teclaModoRapido('10')" class="bg-white/5 border border-white/10 py-3 sm:py-3.5 rounded-xl text-gold text-sm transition hover:bg-white/10">10</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MODO RÁPIDO (CENTRO ABSOLUTO INFALIBLE) -->
+    <div id="modal-modo-rapido" class="hidden fixed inset-0 z-[9999]" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 card p-6 w-[90%] max-w-sm rounded-3xl shadow-2xl border border-gold/30" style="background: var(--bg-deep);">
+            <h3 class="font-cinzel text-center text-gold font-bold tracking-widest mb-5">SELECCIONAR CATEGORÍA</h3>
+            <div id="lista-parametros-rapido" class="space-y-3 overflow-y-auto scrolling-touch pr-2" style="max-height: 50vh;"></div>
+            <button onclick="document.getElementById('modal-modo-rapido').classList.add('hidden')" class="btn-ghost w-full mt-5">CANCELAR</button>
+        </div>
+    </div>
+
+    <div id="vista-ranking" class="hidden w-full max-w-md md:max-w-3xl mx-auto p-4 pt-6 space-y-4">
+        <div class="flex items-center justify-between border-b pb-4" style="border-color:var(--border);">
+            <h2 class="font-cinzel text-xl font-black gradient-gold tracking-widest">🏆 TOP <span id="ranking-corte-num"></span></h2>
+            <div class="flex gap-2">
+                <button id="btn-descargar-top" onclick="descargarComoImagen('vista-ranking', 'btn-descargar-top,btn-volver-ranking')" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 px-3 py-1.5 rounded-lg transition" title="Guardar Imagen">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
+                </button>
+                <button id="btn-volver-ranking" onclick="mostrarVista('vista-scoring')" class="btn-ghost px-3 py-1.5 text-xs">← Volver</button>
+            </div>
+        </div>
+        <select id="filtro-ranking" onchange="renderRanking()" class="input-field text-sm"></select>
+        <div id="lista-ranking" class="space-y-3 pb-10"></div>
+    </div>
+
+    <div id="vista-corte" class="hidden w-full max-w-md md:max-w-4xl mx-auto p-4 pt-4 space-y-4">
+        <div class="card p-3">
+            <p class="text-[9px] text-gold/60 uppercase font-bold tracking-widest mb-2">Tu Top Ideal (Comparador)</p>
+            <div id="corte-top-predictivo" class="flex gap-2 overflow-x-auto pb-1 scrolling-touch"></div>
+        </div>
+        <div class="sticky top-0 z-10 pt-2 pb-3 space-y-3" style="background:var(--bg-deep);">
+            <div class="flex justify-between items-center">
+                <h2 class="font-cinzel text-lg font-black text-white flex items-center gap-2">
+                    <span class="pulse-dot text-red-500">🔴</span> EN VIVO
+                </h2>
+                <button onclick="mostrarVista('vista-scoring')" class="text-gold/60 text-sm">Cancelar</button>
+            </div>
+            <div class="card p-3 text-center">
+                <p class="text-[10px] text-gold/60 uppercase mb-1">Llamadas al Top <span id="corte-objetivo"></span></p>
+                <p id="contador-clasificadas" class="font-cinzel-deco text-4xl font-black gradient-gold">0</p>
+            </div>
+            <button onclick="generarResumenCorte()" class="btn-gold w-full py-3">Avanzar al Resumen →</button>
+        </div>
+        <div id="grilla-corte" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
+    </div>
+
+    <div id="vista-resumen" class="hidden w-full max-w-md md:max-w-3xl mx-auto p-4 pt-8 pb-10 space-y-6">
+        <div class="text-center">
+            <h2 class="font-cinzel text-2xl font-black gradient-gold mb-1 tracking-widest">ANÁLISIS DEL CORTE</h2>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="card-glow p-4 text-center" style="border-color:rgba(74,222,128,0.3);background:rgba(20,50,30,0.6);">
+                <span id="stat-aciertos" class="block font-cinzel-deco text-4xl font-black text-green-400">0</span>
+                <span class="text-[9px] text-green-300 uppercase font-bold tracking-wider">Aciertos</span>
+            </div>
+            <div class="card-glow p-4 text-center" style="border-color:rgba(201,168,76,0.3);background:rgba(50,35,10,0.6);">
+                <span id="stat-sorpresas" class="block font-cinzel-deco text-4xl font-black text-gold">0</span>
+                <span class="text-[9px] text-gold/70 uppercase font-bold tracking-wider">Sorpresas</span>
+            </div>
+            <div class="card-glow p-4 text-center" style="border-color:rgba(248,113,113,0.3);background:rgba(50,15,15,0.6);">
+                <span id="stat-pegadas" class="block font-cinzel-deco text-4xl font-black text-red-400">0</span>
+                <span class="text-[9px] text-red-300 uppercase font-bold tracking-wider">Pegadas</span>
+            </div>
+        </div>
+        <div class="space-y-4 mt-4">
+            <div><div class="section-label text-green-500">✅ Aciertos — coincidiste con el jurado</div><div id="resumen-lista-aciertos" class="flex gap-2 overflow-x-auto pb-2 scrolling-touch"></div></div>
+            <div><div class="section-label text-gold">⚠️ Sorpresas — pasaron y no las tenías</div><div id="resumen-lista-sorpresas" class="flex gap-2 overflow-x-auto pb-2 scrolling-touch"></div></div>
+            <div><div class="section-label text-red-500">❌ Pegadas — las querías y las eliminaron</div><div id="resumen-lista-pegadas" class="flex gap-2 overflow-x-auto pb-2 scrolling-touch"></div></div>
+        </div>
+        <button onclick="avanzarHaciaSiguienteRonda()" class="btn-gold w-full py-4 mt-4">Siguiente Etapa ➡</button>
+        <button onclick="mostrarVista('vista-corte')" class="w-full text-gold/50 text-sm mt-2 py-2">← Volver a Selección en Vivo</button>
+    </div>
+
+    <div id="vista-coronacion" class="hidden w-full max-w-md md:max-w-3xl mx-auto p-4 pt-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3" style="border-color:var(--border);">
+            <h2 class="font-cinzel text-xl font-black tracking-widest" style="color:#d090ff;">👑 CORONACIÓN</h2>
+            <button onclick="mostrarVista('vista-scoring')" class="text-gold/50 text-sm">Cancelar</button>
+        </div>
+        <div class="card p-4 text-center" style="border-color:rgba(180,100,255,0.3);background:rgba(30,10,50,0.8);">
+            <p id="coronacion-instruccion" class="text-xl font-cinzel font-black text-purple-300 animate-pulse tracking-widest">Llamando a...</p>
+            <p class="text-[9px] text-purple-400/60 uppercase mt-1 tracking-widest">Seleccioná a la candidata</p>
+        </div>
+        <div id="lista-coronacion" class="space-y-3 pb-4 mt-2"></div>
+        <button id="btn-emitir-reporte" onclick="generarGranResumenFinal()" class="hidden w-full py-4 rounded-xl font-cinzel font-bold text-sm uppercase tracking-widest mt-4 btn-gold">Emitir Reporte Final ✨</button>
+    </div>
+
+    <!-- ===================== GRAN REPORTE FINAL ===================== -->
+    <div id="vista-gran-resumen" class="hidden w-full max-w-md md:max-w-4xl mx-auto p-4 pt-6 pb-24 space-y-5">
+
+        <div class="flex justify-between items-center">
+            <button onclick="mostrarVista('vista-home')" class="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5" id="btn-volver-reporte">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                Inicio
+            </button>
+            <div class="flex gap-2">
+                <button onclick="abrirPerfilCandidataModal()" class="btn-gold px-3 py-2 text-xs flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                    Ver Perfil
+                </button>
+                <button id="btn-descargar-reporte" onclick="descargarComoImagen('vista-gran-resumen', 'btn-descargar-reporte,btn-volver-reporte,btn-perfil-desde-reporte')" class="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
+                    Foto
+                </button>
+            </div>
+        </div>
+
+        <!-- Hero title -->
+        <div class="text-center py-2">
+            <p class="text-[9px] font-cinzel tracking-[0.3em] text-gold/60 uppercase mb-1">Reporte Final</p>
+            <h1 class="font-cinzel-deco text-3xl font-black gradient-gold leading-tight">RESULTADOS</h1>
+            <p id="reporte-nombre-evento" class="text-[10px] text-gold/40 uppercase tracking-widest font-cinzel mt-1"></p>
+            <div class="flex justify-center gap-3 mt-2">
+                <span class="sparkle text-gold opacity-40 text-xs">✦</span>
+                <span class="sparkle text-gold opacity-70">★</span>
+                <span class="sparkle text-gold opacity-40 text-xs">✦</span>
+            </div>
+        </div>
+
+        <!-- ── SECCIÓN: Top Final — Jurado vs Vos ── -->
+        <div class="space-y-1">
+            <p class="text-[9px] font-cinzel font-bold uppercase tracking-[0.2em] text-gold/60 px-1 mb-3">⚖️ Jurado vs Tu Voto — Final</p>
+            <div id="reporte-comparacion-top" class="space-y-2"></div>
+        </div>
+
+        <!-- ── SECCIÓN: Historial de cortes por etapa ── -->
+        <div class="space-y-1 mt-2">
+            <p class="text-[9px] font-cinzel font-bold uppercase tracking-[0.2em] text-gold/60 px-1 mb-3">📋 Comparación por Etapa</p>
+            <div id="reporte-cortes-historicos" class="space-y-4"></div>
+        </div>
+
+        <!-- ── SECCIÓN: Premios por categoría ── -->
+        <div class="space-y-1 mt-2">
+            <p class="text-[9px] font-cinzel font-bold uppercase tracking-[0.2em] text-gold/60 px-1 mb-3">✨ Premios a la Excelencia</p>
+            <div id="reporte-premios-categorias" class="space-y-2"></div>
+        </div>
+
+    </div>
+
+    <!-- ===================== PERFIL POR CANDIDATA ===================== -->
+    <div id="vista-perfil-candidata" class="hidden w-full max-w-md mx-auto p-4 pt-6 pb-24 space-y-5">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+            <button onclick="mostrarVista('vista-gran-resumen')" class="btn-ghost px-3 py-2 text-xs">← Reporte</button>
+            <p class="font-cinzel text-xs tracking-widest text-gold/60 uppercase">Perfil de Candidata</p>
+            <div class="w-20"></div>
+        </div>
+
+        <!-- Selector -->
+        <div class="card p-4">
+            <label class="text-[9px] font-bold uppercase tracking-widest text-gold/60 block mb-2">Seleccioná una candidata</label>
+            <select id="perfil-selector" onchange="renderPerfilCandidataById(this.value)" class="input-field text-sm">
+                <option value="">— Elegir —</option>
+            </select>
+        </div>
+
+        <!-- Contenido del perfil (se llena dinámicamente) -->
+        <div id="perfil-contenido" class="space-y-5"></div>
+
+    </div>
+
+    <!-- MODAL selector perfil desde reporte -->
+    <div id="modal-perfil-selector" class="hidden fixed inset-0 z-[9999]" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 card p-6 w-[90%] max-w-sm rounded-3xl shadow-2xl border border-gold/30" style="background: var(--bg-deep);">
+            <h3 class="font-cinzel text-center text-gold font-bold tracking-widest mb-5">VER PERFIL DE...</h3>
+            <select id="perfil-modal-select" class="input-field text-sm mb-4">
+                <option value="">— Elegir candidata —</option>
+            </select>
+            <button onclick="irAPerfilDesdeModal()" class="btn-gold w-full py-3 mb-3">Ver Perfil ➡</button>
+            <button onclick="document.getElementById('modal-perfil-selector').classList.add('hidden')" class="btn-ghost w-full">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
